@@ -31,7 +31,17 @@ class PlayersController extends Controller
      */
     public function show($id)
     {
+        $player = new Player();
 
+        return new Response(
+            $player->playerShow($id)
+        );
+
+        // プレイヤーが見つからなかった場合、404エラーレスポンスを返す
+        if (!$player) 
+        {
+            return response()->json(['message' => 'Player not found'], 404);
+        }
     }
 
     /**
@@ -42,7 +52,7 @@ class PlayersController extends Controller
      */
     public function store(Request $request)
     {
-        //
+       
     }
 
     /**
@@ -54,7 +64,12 @@ class PlayersController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+
+        $player = new Player();
+        $Updatedata = $player->playerUpdate($id,$request->name,
+        $request->hp, $request->mp, $request->money);
+         // 更新成功のレスポンスを返す
+        return response()->json(['message' => 'Update Success!'], 200);
     }
 
     /**
@@ -65,7 +80,17 @@ class PlayersController extends Controller
      */
     public function destroy($id)
     {
-        //
+
+        $player = new Player();
+        $player->playerDestroy($id);
+ 
+        // プレイヤーが見つからなかった場合、404エラーレスポンスを返す
+        if (!$player) 
+        {
+            return response()->json(['message' => 'Player not found'], 404);
+        }
+        // 削除成功のレスポンスを返す
+        return response()->json(['message' => 'Player deleted successfully'], 200);
     }
 
     /**
@@ -73,9 +98,12 @@ class PlayersController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Request $request)
     {
-        //
+        $player = new Player();
+        $newId = $player->playerCreate($request->name,
+        $request->hp, $request->mp, $request->money);
+        return new Response(["id"=>$newId]);
     }
 
     /**
