@@ -81,16 +81,16 @@ class PlayersController extends Controller
     public function destroy($id)
     {
 
-     $player = new Player();
-     $player->playerDestroy($id);
+        $player = new Player();
+        $player->playerDestroy($id);
  
-    // プレイヤーが見つからなかった場合、404エラーレスポンスを返す
-    if (!$player) 
-    {
-        return response()->json(['message' => 'Player not found'], 404);
-    }
-    // 削除成功のレスポンスを返す
-    return response()->json(['message' => 'Player deleted successfully'], 200);
+        // プレイヤーが見つからなかった場合、404エラーレスポンスを返す
+        if (!$player) 
+        {
+            return response()->json(['message' => 'Player not found'], 404);
+        }
+        // 削除成功のレスポンスを返す
+        return response()->json(['message' => 'Player deleted successfully'], 200);
     }
 
     /**

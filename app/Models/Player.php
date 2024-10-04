@@ -47,7 +47,11 @@ class Player extends Model
             )
         );
     }
-   
+
+
+   /**
+    *  指定したIDのプレイヤー情報を更新する
+    */
     public function playerUpdate($id,$name,$hp,$mp,$money)
     {
         return(Player::query() 
@@ -60,6 +64,9 @@ class Player extends Model
         );
     }
 
+    /**
+    *  指定したIDのプレイヤー情報を削除する
+    */
     public function playerDestroy($id)
     {
         return(Player::query() ->where('id',$id)
