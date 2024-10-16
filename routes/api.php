@@ -19,3 +19,6 @@ Route::get('/players/{id}', [PlayersController::class, 'show']);
 Route::post('/players', [PlayersController::class, 'create']);
 Route::put('/players/{id}', [PlayersController::class, 'update']);
 Route::delete('/players/{id}', [PlayersController::class, 'destroy']);
+Route::post('/players/{id}/addItem',[PlayersController::class,'addItem']);
+Route::post('/players/{id}/useItem',[PlayersController::class,'useItem']);
+Route::post('/players/{id}/useGacha',[PlayersController::class,'useGacha']);

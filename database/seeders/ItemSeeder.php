@@ -15,8 +15,8 @@ class ItemSeeder extends Seeder
     public function run()
     {
         $testData = [
-            ['name' => 'HPかいふく薬', 'price' => 10, 'value' => 100],
-            ['name' => 'MPかいふく薬', 'price' => 50, 'value' => 20]
+            ['name' => 'HPかいふく薬', 'price' => 10, 'value' => 100, 'type'=>1, '%'=>30],
+            ['name' => 'MPかいふく薬', 'price' => 50, 'value' => 20, 'type'=>2, '%'=>70]
         ];
 
         foreach ($testData as $datum) {
@@ -24,6 +24,9 @@ class ItemSeeder extends Seeder
             $item->name = $datum['name'];
             $item->price = $datum['price'];
             $item->value = $datum['value'];
+            $item->type = $datum['type'];
+            $item->parcent = $datum['%'];
+
             $item->save();
         }
     }

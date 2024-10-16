@@ -72,4 +72,5 @@ class Player extends Model
         return(Player::query() ->where('id',$id)
         ->delete());
     }
+   
 }
