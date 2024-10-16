@@ -9,4 +9,10 @@ class Item extends Model
 {
     public $timestamps = false;
     use HasFactory;
+
+    /**
+     * アイテムを1件取得
+     * @return １件のプレイヤー情報
+     */
+   
 }
