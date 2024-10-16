@@ -138,6 +138,8 @@ class PlayersController extends Controller
         ->where('item_id', $request->itemid)
         ->first();
 
+        $itemCount=$request->count;
+
         if ($playerItem) {
             // アイテムを持っている場合、現在の数量を取得
             $newcount = $playerItem->count + $request->count;
@@ -147,25 +149,13 @@ class PlayersController extends Controller
             ->where('item_id', $request->itemid)
             ->update(['count' => $newcount]);
 
-            return response()->json([
-                'item_id' => $request->itemid,
-                'count' => $newcount
-                ]);
+           $itemCount=$newCount;
                 
-        }
-         else
-        {
-            // アイテムを持っていない場合、新規追加
-            PlayerItem:: insert([
-                'player_id' => $playerid,
-                'item_id' => $request->itemid,
-                'count' => $request->count
-                ]);
-
-            return response()->json([
-                'item_id' => $request->itemid,
-                'count' => $request->count
-                ]);
+        
+        return response()->json([
+            'item_id' => $request->itemid,
+            'count' => $itemCount
+            ]);
         }
     }
 
