@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use App\Http\Resources\PlayerResource;
 use App\Models\Player;
 use App\Models\Item;
@@ -9,6 +10,7 @@ use App\Models\PlayerItem;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class PlayersController extends Controller
 {
@@ -122,7 +124,7 @@ class PlayersController extends Controller
     /**
      * プレイヤーにアイテムを持たせる
      */
-    public function additem(Request $request,$id)
+    public function addItem(Request $request,$id)
     {
 
         // プレイヤーIDを取得
@@ -171,125 +173,135 @@ class PlayersController extends Controller
     /**
      * アイテムを使用する
      */
-    public function useitem(Request $request,$id)
+    public function useItem(Request $request,$id)
     {
-        // プレイヤーの存在確認
-        $player = Player::where('id', $id)->select('id','hp','mp')->first();
-       
-        // アイテムの存在確認
-        $item = Item::where('id', $request->itemid)->select('id','type','value')->first();
-        
-        // プレイヤーアイテムテーブルにプレイヤーがアイテムを持っているか確認
-        $playerItem = PlayerItem ::countplayeritem($id,$item->id);
-        $playerItem->count;
-
-        $requestCount = $request->count;
-
-        // アイテムの所持数がゼロじゃないかどうか確認
-        if ($playerItem->count <= 0) {
-            return response()->json(['error' => 'No item left to use']);
-        }
-
-        // アイテムの種類を判別し、HP,MPの上限チェック
-        $newHp = $player->hp;
-        $newMp = $player->mp;
-        $value = $item->value;
-
-        
-        //HPが上限の場合、アイテムを所持数はそのままでレスポンスを返す
-        if($newHp>=200)
+        DB::beginTransaction();
+        try
         {
+             // プレイヤーの存在確認
+            $player = Player::where('id', $id)->select('id','hp','mp')->first();
+            if(!$player)
+            {
+                throw new Exception('No player');
+            }
+
+            // アイテムの存在確認
+            $item = Item::where('id', $request->itemid)->select('id','type','value')->first();
+            if(!$item)
+            {
+                throw new Exception('No item');
+            }
+            
+            // プレイヤーアイテムテーブルにプレイヤーがアイテムを持っているか確認
+            $playerItem = PlayerItem ::countPlayerItem($id,$item->id);
+            $playerItem->count;
+
+            //何個消費すること
+            $requestCount = $request->count;
+
+            // アイテムの所持数がゼロじゃないかどうか確認
+            if ($playerItem->count <= 0) 
+            {
+                throw new Exception('No item left to use');
+            }
+
+            // アイテムの種類を判別し、HP,MPの上限チェック
+            $newHp = $player->hp;
+            $newMp = $player->mp;
+            $value = $item->value;
+
+            
+            //HPが上限の場合、MPが上限の場合はアイテムの所持数はそのままでレスポンスを返す
+        
+            if ($item->type == 1) // HPアイテムの効果
+            { 
+                if ($newHp >= 200) 
+                {
+                    throw new Exception('HPが上限に達しているのでアイテムを使いませんでした。');
+                }
+            } 
+            elseif ($item->type == 2)  // MPアイテムの効果
+            {
+                if ($newMp >= 200) 
+                {
+                    throw new Exception('MPが上限に達しているのでアイテムを使いませんでした。');
+                }
+            }
+                
+                
+            // アイテムを消費する
+            $newCount = $playerItem->count - $requestCount;
+        
+            if ($newCount == 0)
+            {
+                throw new Exception('No items!');
+            }
+        
+            $usedCount = 0; //実際に使用したアイテムの数
+
+            // 効果を発揮
+            for ($i = 0; $i < $requestCount; $i++)
+            {
+                if ($item->type == 1) // HPアイテムの効果
+                { 
+                    $newHp = $newHp + $value; 
+                    $usedCount++;
+                    if($newHp>=200)
+                    {
+                            $newHp = 200;
+                            break;
+                    }
+                } 
+                elseif ($item->type == 2)  // MPアイテムの効果
+                {
+                    $newMp = $newMp + $value; 
+                    $usedCount++;
+                    if($newMp>=200)
+                    {
+                            $newMp = 200;
+                            break;
+                    }
+                }
+            
+            }
+
+            $finalCount=$playerItem->count - $usedCount;
+
+            
+            //プレイヤーを更新
+            Player::where('id', $id)
+                ->update(['hp' => $newHp, 'mp' => $newMp]);
+              
+            //プレイヤーアイテムを更新    
+            PlayerItem::query()->where('player_id', $player->id)
+                ->where('item_id', $item->id)
+                ->update(['count' => $finalCount]);
+
+            DB::commit();
+
             return response()->json([
                 'item_id' => $item->id,
-                'count' => $playerItem->count,
-              'players'=>[
-                    'id' => $id,
-                    'hp' => $newHp,
-                    'mp' => $newMp
-              ],
-              'Message' => 'HPが上限に達しているのでアイテムを使いませんでした。'
-              ]);
-        }
-
-        //HPが上限の場合、アイテムを所持数はそのままでレスポンスを返す
-        if($newMp>=200)
-        {
-            return response()->json([
-                'item_id' => $item->id,
-                'count' => $playerItem->count,
-              'players'=>[
-                    'id' => $id,
-                    'hp' => $newHp,
-                    'mp' => $newMp
-              ],
-              'Message' => 'MPが上限に達しているのでアイテムを使いませんでした。'
-              ]);
-        }
-        
-
-        
-        // アイテムを消費する
-        $newCount = $playerItem->count - $requestCount;
-       
-        if ($newCount == 0)
-        {
-            return response()->json(['error' => 'No items!'], 400);
-        }
-       
-
-    
-        // 効果を発揮
-        $usedCount = 0; //実際に使用したアイテムの数
-        for ($i = 0; $i < $requestCount; $i++)
-        {
-            if($newHp==200 || $newMp==200)
-            {
-                break;
-            }
-            else
-            {
-               // 効果を発揮
-               if ($item->type == 1) // HPアイテムの効果
-               { 
-                   $newHp = $newHp + $value; 
-                   $usedCount++;
-               } 
-               elseif ($item->type == 2)  // MPアイテムの効果
-               {
-                   $newMp = $newMp + $value; 
-                   $usedCount++;
-               }
-            }
-        }
-
-        $finalCount=$playerItem->count - $usedCount;
-
-        //プレイヤーを更新
-        Player::where('id', $id)
-            ->update(['hp' => $newHp, 'mp' => $newMp]);
-        
-        //プレイヤーアイテムを更新    
-        PlayerItem::query()->where('player_id', $player->id)
-            ->where('item_id', $item->id)
-            ->update(['count' => $finalCount]);
-
-        return response()->json([
-            'item_id' => $item->id,
-            'count' => $finalCount,
-          'players'=>[
+                'count' => $finalCount,
+                'players'=>[
                 'id' => $id,
                 'hp' => $newHp,
                 'mp' => $newMp
-          ]
-            
-        ]);
+                ]
+                
+            ]);
+        }
+        catch(Exception $e)
+        {
+            DB::rollback();
+            return response()->json(["message"=>$e->getMessage()]);
+        }
     }
 
 
     /**
      * ガチャを引く
      */
-    public function usegacha(Request $request,$id)
+    public function useGacha(Request $request,$id)
     {
         //プレイヤーの存在確認
         $player = Player::query()->where('id',$id)->get();
