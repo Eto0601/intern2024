@@ -140,7 +140,8 @@ class PlayersController extends Controller
 
         $itemCount=$request->count;
 
-        if ($playerItem) {
+        if ($playerItem) 
+        {
             // アイテムを持っている場合、現在の数量を取得
             $newcount = $playerItem->count + $request->count;
     
@@ -150,13 +151,13 @@ class PlayersController extends Controller
             ->update(['count' => $newcount]);
 
            $itemCount=$newCount;
-                
+        }       
         
         return response()->json([
             'item_id' => $request->itemid,
             'count' => $itemCount
             ]);
-        }
+        
     }
 
    
