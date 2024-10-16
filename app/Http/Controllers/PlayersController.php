@@ -194,7 +194,6 @@ class PlayersController extends Controller
             
             // プレイヤーアイテムテーブルにプレイヤーがアイテムを持っているか確認
             $playerItem = PlayerItem ::countPlayerItem($id,$item->id);
-            $playerItem->count;
 
             //何個消費すること
             $requestCount = $request->count;
